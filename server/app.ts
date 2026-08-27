@@ -5,6 +5,7 @@ import express, { type NextFunction, type Request, type Response } from 'express
 import multer from 'multer';
 import { createDefaultProject } from '../src/shared/defaults';
 import {
+	captionEditRequestSchema,
 	pipelineRequestSchema,
 	projectDocumentSchema,
 	renderRequestSchema,
@@ -27,7 +28,7 @@ import {
 	videoPaths,
 } from './fs-store';
 import { JobQueue } from './jobs';
-import { runCaptionPipeline, verifyVideo } from './pipeline';
+import { getCaptionText, runCaptionPipeline, updateCaptionText, verifyVideo } from './pipeline';
 import { runRender } from './render';
 import { ROOT, UPLOADS } from './paths';
 
@@ -167,8 +168,19 @@ export const createApplication = async ({ autoStartJobs = true }: { autoStartJob
 			const all = await listVideos();
 			const summary = all.find((item) => item.slug === slug);
 			const transcriptPages = (await exists(paths.tokens)) ? JSON.parse(await readFile(paths.tokens, 'utf8')) : [];
+			const captionText = (await exists(paths.captions)) ? await getCaptionText(slug) : '';
 			const activeJob = (await jobs.listActive()).find((job) => job.videoSlug === slug) || null;
-			res.json({ ...summary, transcriptPages, activeJob });
+			res.json({ ...summary, captionText, transcriptPages, activeJob });
+		})
+	);
+	app.put(
+		'/api/videos/:slug/captions',
+		asyncRoute(async (req, res) => {
+			const slug = slugSchema.parse(req.params.slug);
+			if (!(await exists(videoPaths(slug).video)))
+				throw Object.assign(new Error('Video not found.'), { code: 'VIDEO_NOT_FOUND', status: 404 });
+			const payload = captionEditRequestSchema.parse(req.body);
+			res.json(await updateCaptionText(slug, payload.text));
 		})
 	);
 	app.get(

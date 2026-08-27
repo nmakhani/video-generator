@@ -33,10 +33,11 @@ Open `http://127.0.0.1:4174`.
 
 1. Upload an MP4 in **Videos**.
 2. Open it and run the full caption pipeline.
-3. Create a project and select the video.
-4. Edit the scenes, theme, or raw JSON and save.
-5. Render the project, optionally send the result to Drive, and download the completed MP4.
-6. Open **Renders** to review completed jobs and delivery status.
+3. Correct any transcription mistakes in the editable transcript and save the caption corrections.
+4. Create a project and select the video.
+5. Edit the scenes, theme, or raw JSON and save.
+6. Render the project, optionally send the result to Drive, and download the completed MP4.
+7. Open **Renders** to review completed jobs and delivery status.
 
 When a source video is selected, the template stores the video slug in `videoFolder` (for example,
 `my-video`). The renderer resolves that slug to `videos/my-video` and uses it to load both `video.mp4`
@@ -54,6 +55,11 @@ To enable Google Drive delivery and Gmail notifications, set the following in `.
 - `GOOGLE_DRIVE_FOLDER_ID` if you want uploads placed in a specific folder
 - `GOOGLE_DRIVE_SHARE_ANYONE=true` if you want public Drive links
 - `GMAIL_FROM` to send the completion email from a configured Gmail alias
+
+If Google returns `invalid_grant`, the refresh token has expired or been revoked. Replace
+`GOOGLE_REFRESH_TOKEN` with a newly authorized token and restart the app. The local render still completes and
+remains downloadable when Google delivery fails. Remove the Google OAuth values from `.env` if local-only
+rendering is preferred.
 
 ## Commands
 

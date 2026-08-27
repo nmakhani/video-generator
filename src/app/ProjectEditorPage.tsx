@@ -75,6 +75,7 @@ export const ProjectEditorPage = () => {
 	const [renderJob, setRenderJob] = useState<RenderJob | null>(null);
 	const [renderStatus, setRenderStatus] = useState<'idle' | 'submitting' | 'error'>('idle');
 	const [renderError, setRenderError] = useState('');
+	const [deliveryWarning, setDeliveryWarning] = useState('');
 	const [notificationEmail, setNotificationEmail] = useState('');
 	const [previewQuality, setPreviewQuality] = useState<PreviewQuality>('30');
 	const [previewStartFrame, setPreviewStartFrame] = useState(0);
@@ -125,10 +126,7 @@ export const ProjectEditorPage = () => {
 		},
 		[previewDurationInFrames, previewFps]
 	);
-	const previewInitialFrame = useMemo(
-		() => toPreviewFrame(previewStartFrame),
-		[previewStartFrame, toPreviewFrame]
-	);
+	const previewInitialFrame = useMemo(() => toPreviewFrame(previewStartFrame), [previewStartFrame, toPreviewFrame]);
 	const deferredTokens = useDeferredValue(tokens);
 	const selectedVideo = useMemo(() => videos.find((video) => video.slug === videoSlug) ?? null, [videos, videoSlug]);
 	const previewVideoSrc =
@@ -220,10 +218,13 @@ export const ProjectEditorPage = () => {
 			return;
 		}
 		if (renderJob.status === 'completed') {
-			if (renderJob.error || renderJob.deliveryError) {
+			if (renderJob.error) {
 				console.error('[render] job completed with errors', renderJob);
 				setRenderStatus('error');
-				setRenderError(`${renderJob.error || renderJob.deliveryError || 'Render failed.'} The page shouldn't reload.`);
+				setRenderError(`${renderJob.error} The page shouldn't reload.`);
+			} else if (renderJob.deliveryError) {
+				console.warn('[render] local render completed but delivery failed', renderJob);
+				setDeliveryWarning(`Local MP4 completed, but Google delivery failed: ${renderJob.deliveryError}`);
 			}
 			return;
 		}
@@ -239,6 +240,7 @@ export const ProjectEditorPage = () => {
 	const noticeMessage =
 		error ||
 		renderError ||
+		deliveryWarning ||
 		captionsLoadIssue ||
 		(captionsMissing ? 'Captions are enabled, but this video has no tokens.json yet.' : message);
 	const renderNotice =
@@ -290,6 +292,7 @@ export const ProjectEditorPage = () => {
 			});
 			setError('');
 			setRenderError('');
+			setDeliveryWarning('');
 			setRenderStatus('submitting');
 			const savedSlug = await save();
 			const job = await request<RenderJob>(
@@ -299,10 +302,10 @@ export const ProjectEditorPage = () => {
 			console.info('[render] job queued', job);
 			setRenderJob(job);
 			setRenderStatus('idle');
-			if (job.error || job.deliveryError) {
+			if (job.error) {
 				console.error('[render] queue response included an error', job);
 				setRenderStatus('error');
-				setRenderError(`${job.error || job.deliveryError || 'Render failed.'} The page shouldn't reload.`);
+				setRenderError(`${job.error} The page shouldn't reload.`);
 			}
 		} catch (e) {
 			const message = e instanceof Error ? e.message : String(e);
@@ -552,25 +555,25 @@ export const ProjectEditorPage = () => {
 						<div className="flex flex-1 items-start justify-center">
 							<div className="flex w-full flex-col items-end">
 								<div className="aspect-[1080/1920] w-full max-w-[380px] overflow-visible rounded-xl bg-black">
-								<Player
-									ref={previewPlayerRef}
-									initialFrame={previewInitialFrame}
-									key={`preview-${previewQuality}-${videoSlug ?? 'none'}-${previewInitialFrame}`}
-									acknowledgeRemotionLicense
-									audioLatencyHint="playback"
-									bufferStateDelayInMilliseconds={180}
-									component={InfographicVideo}
-									inputProps={previewInputProps}
-									durationInFrames={previewDurationInFrames}
-									compositionWidth={VIDEO_WIDTH}
-									compositionHeight={VIDEO_HEIGHT}
-									fps={previewFps}
-									controls
-									alwaysShowControls
-									numberOfSharedAudioTags={1}
-									overflowVisible
-									style={{ width: '100%', height: '100%' }}
-								/>
+									<Player
+										ref={previewPlayerRef}
+										initialFrame={previewInitialFrame}
+										key={`preview-${previewQuality}-${videoSlug ?? 'none'}-${previewInitialFrame}`}
+										acknowledgeRemotionLicense
+										audioLatencyHint="playback"
+										bufferStateDelayInMilliseconds={180}
+										component={InfographicVideo}
+										inputProps={previewInputProps}
+										durationInFrames={previewDurationInFrames}
+										compositionWidth={VIDEO_WIDTH}
+										compositionHeight={VIDEO_HEIGHT}
+										fps={previewFps}
+										controls
+										alwaysShowControls
+										numberOfSharedAudioTags={1}
+										overflowVisible
+										style={{ width: '100%', height: '100%' }}
+									/>
 								</div>
 							</div>
 						</div>

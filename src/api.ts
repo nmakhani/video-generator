@@ -11,7 +11,11 @@ export type VideoSummary = {
 	hasTokens: boolean;
 	previewUrl: string;
 };
-export type VideoDetail = VideoSummary & { transcriptPages: TranscriptPage[]; activeJob: JobManifest | null };
+export type VideoDetail = VideoSummary & {
+	captionText: string;
+	transcriptPages: TranscriptPage[];
+	activeJob: JobManifest | null;
+};
 export type ProjectSummary = ProjectDocument & { slug: string; updatedAt: string };
 export type RenderSummary = JobManifest & { downloadUrl?: string };
 export type UploadProgress = {

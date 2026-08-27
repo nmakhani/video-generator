@@ -58,7 +58,13 @@ export const getGoogleAccessToken = async ({ allowUnauthenticated = false } = {}
 	});
 
 	if (!response.ok) {
-		throw new Error(`Token refresh failed: ${await response.text()}`);
+		const responseText = await response.text();
+		if (responseText.includes('invalid_grant')) {
+			throw new Error(
+				'Google authorization expired or was revoked. The local MP4 is still available. Replace GOOGLE_REFRESH_TOKEN in .env (or remove the Google OAuth values to disable Drive delivery), then restart the app.'
+			);
+		}
+		throw new Error(`Google token refresh failed: ${responseText}`);
 	}
 
 	const data = await response.json();

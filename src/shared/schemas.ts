@@ -84,11 +84,16 @@ export const pipelineRequestSchema = z.object({
 	force: z.boolean().default(false),
 });
 
+export const captionEditRequestSchema = z.object({
+	text: z.string().trim().min(1, 'Caption text cannot be empty.').max(200_000, 'Caption text is too long.'),
+});
+
 export const renderRequestSchema = z.object({
 	email: z.string().trim().email('Enter a valid notification email.').optional().or(z.literal('')),
 });
 
 export type ProjectDocument = z.infer<typeof projectDocumentSchema>;
+export type CaptionEditRequest = z.infer<typeof captionEditRequestSchema>;
 export type PipelineRequest = z.infer<typeof pipelineRequestSchema>;
 export type RenderRequest = z.infer<typeof renderRequestSchema>;
 

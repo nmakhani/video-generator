@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { jsonOptions, request, type VideoDetail } from '../api';
 import type { JobManifest, PipelineRequest } from '../shared/schemas';
-import { button, errorNotice, eyebrow, mutedText, pageShell, panel, secondaryButton } from '../ui';
+import { button, errorNotice, eyebrow, input, mutedText, pageShell, panel, secondaryButton } from '../ui';
 
 const stageDetails: Record<string, { label: string; description: string }> = {
 	queued: { label: 'Queued', description: 'Waiting for the current task to begin.' },
@@ -26,6 +26,10 @@ export const VideoDetailPage = () => {
 	const [job, setJob] = useState<JobManifest | null>(null);
 	const [force, setForce] = useState(false);
 	const [error, setError] = useState('');
+	const [captionText, setCaptionText] = useState('');
+	const [savedCaptionText, setSavedCaptionText] = useState('');
+	const [captionSaveStatus, setCaptionSaveStatus] = useState<'idle' | 'saving'>('idle');
+	const [captionMessage, setCaptionMessage] = useState('');
 	const jobRunning = Boolean(job && !['completed', 'failed'].includes(job.status));
 	const progressPercent = job ? Math.round(Math.min(1, Math.max(0, job.progress)) * 100) : 0;
 	const stage = job ? (stageDetails[job.stage] ?? { label: job.stage.replaceAll('-', ' '), description: '' }) : null;
@@ -33,6 +37,8 @@ export const VideoDetailPage = () => {
 		() =>
 			request<VideoDetail>(`/api/videos/${slug}`).then((value) => {
 				setVideo(value);
+				setCaptionText(value.captionText || '');
+				setSavedCaptionText(value.captionText || '');
 				if (value.activeJob) setJob(value.activeJob);
 			}),
 		[slug]
@@ -55,9 +61,33 @@ export const VideoDetailPage = () => {
 	const run = async (action: PipelineRequest['action']) => {
 		try {
 			setError('');
+			setCaptionMessage('');
 			setJob(await request(`/api/videos/${slug}/pipeline`, jsonOptions('POST', { action, force })));
 		} catch (e) {
 			setError(e instanceof Error ? e.message : String(e));
+		}
+	};
+	const saveCaptions = async () => {
+		try {
+			setError('');
+			setCaptionMessage('');
+			setCaptionSaveStatus('saving');
+			const result = await request<Pick<VideoDetail, 'captionText' | 'transcriptPages'>>(
+				`/api/videos/${slug}/captions`,
+				jsonOptions('PUT', { text: captionText })
+			);
+			setCaptionText(result.captionText);
+			setSavedCaptionText(result.captionText);
+			setVideo((current) =>
+				current
+					? { ...current, captionText: result.captionText, hasTokens: true, transcriptPages: result.transcriptPages }
+					: current
+			);
+			setCaptionMessage('Caption corrections saved and render tokens rebuilt.');
+		} catch (e) {
+			setError(e instanceof Error ? e.message : String(e));
+		} finally {
+			setCaptionSaveStatus('idle');
 		}
 	};
 
@@ -70,7 +100,10 @@ export const VideoDetailPage = () => {
 
 	return (
 		<main className={pageShell}>
-			<Link className="inline-flex rounded-full border border-transparent px-3.5 py-2 text-indigo-100 no-underline" to="/videos">
+			<Link
+				className="inline-flex rounded-full border border-transparent px-3.5 py-2 text-indigo-100 no-underline"
+				to="/videos"
+			>
 				Back to video library
 			</Link>
 			<section className="mt-5 grid gap-7 lg:grid-cols-[minmax(300px,0.8fr)_minmax(420px,1.2fr)]">
@@ -90,9 +123,27 @@ export const VideoDetailPage = () => {
 								disabled: false,
 								buttonText: 'Generate preview',
 							},
-							{ done: video.hasAudio, label: '2. audio.wav', action: 'audio' as const, disabled: false, buttonText: 'Generate audio' },
-							{ done: video.hasCaptions, label: '3. captions.json', action: 'captions' as const, disabled: !video.hasAudio, buttonText: 'Generate captions' },
-							{ done: video.hasTokens, label: '4. tokens.json', action: 'tokens' as const, disabled: !video.hasCaptions, buttonText: 'Build tokens' },
+							{
+								done: video.hasAudio,
+								label: '2. audio.wav',
+								action: 'audio' as const,
+								disabled: false,
+								buttonText: 'Generate audio',
+							},
+							{
+								done: video.hasCaptions,
+								label: '3. captions.json',
+								action: 'captions' as const,
+								disabled: !video.hasAudio,
+								buttonText: 'Generate captions',
+							},
+							{
+								done: video.hasTokens,
+								label: '4. tokens.json',
+								action: 'tokens' as const,
+								disabled: !video.hasCaptions,
+								buttonText: 'Build tokens',
+							},
 						].map((step) => (
 							<div
 								className={`flex items-center justify-between gap-3 rounded-xl border bg-slate-950/70 p-3 ${
@@ -111,6 +162,47 @@ export const VideoDetailPage = () => {
 							</div>
 						))}
 					</div>
+					{video.hasCaptions && (
+						<div className="my-6 grid gap-3 rounded-2xl border border-sky-200/15 bg-slate-950/55 p-4">
+							<div>
+								<p className={eyebrow}>Editable transcript</p>
+								<p className="mt-2 text-sm text-indigo-100/70">
+									Correct spelling or merge and split words here. Saving realigns changed words and rebuilds the render
+									tokens.
+								</p>
+							</div>
+							<textarea
+								aria-label="Caption transcript"
+								className={`${input} min-h-52 resize-y leading-7`}
+								disabled={jobRunning || captionSaveStatus === 'saving'}
+								onChange={(event) => {
+									setCaptionText(event.target.value);
+									setCaptionMessage('');
+								}}
+								spellCheck
+								value={captionText}
+							/>
+							<div className="flex flex-wrap items-center justify-between gap-3">
+								<span className="text-sm text-indigo-100/65">
+									{captionText.trim() ? captionText.trim().split(/\s+/).length : 0} timed words
+								</span>
+								<button
+									className={secondaryButton}
+									disabled={
+										jobRunning ||
+										captionSaveStatus === 'saving' ||
+										captionText === savedCaptionText ||
+										!captionText.trim()
+									}
+									onClick={() => void saveCaptions()}
+									type="button"
+								>
+									{captionSaveStatus === 'saving' ? 'Saving...' : 'Save caption corrections'}
+								</button>
+							</div>
+							{captionMessage && <p className="m-0 text-sm text-emerald-300">{captionMessage}</p>}
+						</div>
+					)}
 					<label className="my-4 block text-indigo-100/75">
 						<input checked={force} className="mr-2" onChange={(e) => setForce(e.target.checked)} type="checkbox" />
 						Regenerate and invalidate downstream files
