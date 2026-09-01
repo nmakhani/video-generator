@@ -1,0 +1,15 @@
+@font-face {
+	font-family: 'Gued';
+	font-style: normal;
+	font-weight: 400;
+	font-display: block;
+	src: url('../../Fonts/gued/Gued.otf') format('opentype');
+}
+
+@font-face {
+	font-family: 'Gued';
+	font-style: normal;
+	font-weight: 700 1000;
+	font-display: block;
+	src: url('../../Fonts/gued/Gued - Bold.otf') format('opentype');
+}

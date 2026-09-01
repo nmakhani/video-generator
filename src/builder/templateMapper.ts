@@ -8,6 +8,7 @@ import {
 	isVideoShownSegment,
 } from '../layoutCatalog';
 import type { FormSegment } from './types';
+import type { VideoFontFamily } from '../brand';
 
 const defaultItems = [
 	'First point',
@@ -92,12 +93,14 @@ export const toTemplate = (
 	intro: boolean,
 	outro: boolean,
 	caption: boolean,
+	fontFamily: VideoFontFamily,
 	theme: Theme,
 	videoBased: boolean,
 	segments: FormSegment[],
 	videoFolder?: string
 ): InfographicTemplate => ({
 	title: title.trim() || 'Untitled infographic',
+	fontFamily,
 	intro,
 	outro,
 	videoBased,

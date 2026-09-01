@@ -23,22 +23,6 @@ textarea {
 		transform 0.18s ease;
 }
 
-@font-face {
-	font-family: 'Gued';
-	font-style: normal;
-	font-weight: 400;
-	font-display: block;
-	src: url('/gued.otf') format('opentype');
-}
-
-@font-face {
-	font-family: 'Gued';
-	font-style: normal;
-	font-weight: 700 950;
-	font-display: block;
-	src: url('/gued-bold.otf') format('opentype');
-}
-
 body {
 	background: #030712;
 	color: #f7f8ff;

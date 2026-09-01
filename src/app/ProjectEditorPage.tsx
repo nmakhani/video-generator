@@ -30,6 +30,7 @@ import {
 import { button, errorNotice, eyebrow, field, fieldLabel, input, notice, panel, secondaryButton } from '../ui';
 import { InfographicVideo } from '../video/InfographicVideo';
 import type { TranscriptPage } from '../video/types';
+import { DEFAULT_VIDEO_FONT, VIDEO_FONT_OPTIONS, getVideoFontFamily, type VideoFontFamily } from '../brand';
 
 type ProjectPayload = ProjectDocument & { slug: string };
 type RenderJob = JobManifest & { downloadUrl?: string };
@@ -63,6 +64,7 @@ export const ProjectEditorPage = () => {
 	const [outro, setOutro] = useState(true);
 	const [videoBased, setVideoBased] = useState(false);
 	const [caption, setCaption] = useState(false);
+	const [fontFamily, setFontFamily] = useState<VideoFontFamily>(DEFAULT_VIDEO_FONT);
 	const [theme, setTheme] = useState<Theme>({ ...defaultTheme });
 	const [segments, setSegments] = useState<FormSegment[]>([]);
 	const [videos, setVideos] = useState<VideoSummary[]>([]);
@@ -90,12 +92,13 @@ export const ProjectEditorPage = () => {
 				intro,
 				outro,
 				caption,
+				fontFamily,
 				theme,
 				videoBased,
 				segments,
 				videoSlug ? videoFolderForSlug(videoSlug) : undefined
 			),
-		[title, hookText, intro, outro, caption, theme, videoBased, segments, videoSlug]
+		[title, hookText, intro, outro, caption, fontFamily, theme, videoBased, segments, videoSlug]
 	);
 	const durationInFrames = useMemo(() => getTemplateDurationInFrames(template, FPS), [template]);
 	const previewFps = previewQualityOptions[previewQuality].fps;
@@ -160,6 +163,7 @@ export const ProjectEditorPage = () => {
 		setOutro(next.outro === true);
 		setVideoBased(next.videoBased === true);
 		setCaption(next.videoBased === true && next.caption === true);
+		setFontFamily(next.fontFamily ?? DEFAULT_VIDEO_FONT);
 		setVideoSlug(videoSlugFromFolder(next.videoFolder) ?? fallbackVideoSlug);
 		setTheme({ ...defaultTheme, ...next.theme });
 		setSegments(formSegments(next));
@@ -464,6 +468,21 @@ export const ProjectEditorPage = () => {
 								onChange={(e) => setHookText(e.target.value)}
 							/>
 						</label>
+						<label className={field}>
+							<span className={fieldLabel}>Video font</span>
+							<select
+								className={input}
+								onChange={(event) => setFontFamily(event.target.value as VideoFontFamily)}
+								style={{ fontFamily: getVideoFontFamily(fontFamily) }}
+								value={fontFamily}
+							>
+								{VIDEO_FONT_OPTIONS.map((option) => (
+									<option key={option.value} style={{ fontFamily: option.cssFamily }} value={option.value}>
+										{option.label}
+									</option>
+								))}
+							</select>
+						</label>
 						<div className="flex flex-wrap gap-4 text-indigo-100">
 							<label className="flex items-center gap-2">
 								<input
@@ -660,6 +679,7 @@ export const ProjectEditorPage = () => {
 										<LayoutPreview
 											accent={segment.accent || theme.accent}
 											endFrame={segmentRanges[index]?.endFrame ?? 0}
+											fontFamily={fontFamily}
 											onSeekToStart={() => scrollAndSeekPreview(segmentRanges[index]?.startFrame ?? 0)}
 											segment={segment}
 											startFrame={segmentRanges[index]?.startFrame ?? 0}

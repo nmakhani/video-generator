@@ -1,4 +1,4 @@
-import { BRAND_COLORS } from './brand';
+import { BRAND_COLORS, type VideoFontFamily } from './brand';
 
 export const FPS = 30;
 export const VIDEO_WIDTH = 1080;
@@ -58,6 +58,7 @@ export type InfographicSegment = AnimationSegment | VideoShownSegment;
 
 export type InfographicTemplate = {
 	title: string;
+	fontFamily?: VideoFontFamily;
 	caption?: boolean;
 	hookText?: string;
 	intro?: boolean;

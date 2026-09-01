@@ -1,12 +1,4 @@
-import {
-	AbsoluteFill,
-	Audio,
-	OffthreadVideo,
-	Sequence,
-	staticFile,
-	useCurrentFrame,
-	useVideoConfig,
-} from 'remotion';
+import { AbsoluteFill, Audio, OffthreadVideo, Sequence, staticFile, useCurrentFrame, useVideoConfig } from 'remotion';
 import {
 	OUTRO_DURATION_SECONDS,
 	INTRO_HOOK_DURATION_SECONDS,
@@ -14,7 +6,7 @@ import {
 	isVideoShownSegment,
 	type InfographicSegment,
 } from '../layoutCatalog';
-import { BRAND_FONTS } from '../brand';
+import { BRAND_FONTS, DEFAULT_VIDEO_FONT, videoFontStyle } from '../brand';
 import { FontGate } from './FontGate';
 import { CaptionsOverlay } from './CaptionsOverlay';
 import { IntroHookOverlay } from './IntroHookOverlay';
@@ -88,6 +80,7 @@ export const InfographicVideo = ({
 	const frame = useCurrentFrame();
 	const { fps } = useVideoConfig();
 	const isPreview = mediaMode === 'preview';
+	const fontFamily = template.fontFamily ?? DEFAULT_VIDEO_FONT;
 	const segmentRanges = getSegmentRanges(template.segments, fps);
 	const segmentEndFrame = segmentRanges.reduce(
 		(endFrame, range) => Math.max(endFrame, range.from + range.durationInFrames),
@@ -104,12 +97,13 @@ export const InfographicVideo = ({
 	return (
 		<AbsoluteFill
 			style={{
+				...videoFontStyle(fontFamily),
 				background: template.theme.background,
 				color: template.theme.text,
 				fontFamily: BRAND_FONTS.subheading,
 			}}
-			>
-			{!isPreview ? <FontGate /> : null}
+		>
+			{!isPreview ? <FontGate fontFamily={fontFamily} /> : null}
 
 			{videoSrc && isVideoBased ? (
 				<>
@@ -119,11 +113,7 @@ export const InfographicVideo = ({
 							opacity: sourceVideoOpacity,
 						}}
 					>
-						<SyncedVideo
-							mediaMode={mediaMode}
-							startFrom={0}
-							videoSrc={videoSrc}
-						/>
+						<SyncedVideo mediaMode={mediaMode} startFrom={0} videoSrc={videoSrc} />
 					</AbsoluteFill>
 					{!isPreview ? <Audio src={videoSrc} /> : null}
 				</>

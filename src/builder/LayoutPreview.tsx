@@ -13,10 +13,12 @@ import {
 import { SegmentScene } from '../video/SegmentScene';
 import type { SegmentSceneProps } from '../video/types';
 import type { FormSegment } from './types';
+import type { VideoFontFamily } from '../brand';
 
 type LayoutPreviewProps = {
 	accent: string;
 	endFrame: number;
+	fontFamily: VideoFontFamily;
 	onSeekToStart: () => void;
 	startFrame: number;
 	segment: FormSegment;
@@ -59,13 +61,22 @@ const formatSeconds = (frame: number): string => {
 	return `${Number.isInteger(rounded) ? rounded.toFixed(0) : rounded.toFixed(1)}s`;
 };
 
-export const LayoutPreview = ({ accent, endFrame, onSeekToStart, startFrame, segment, theme }: LayoutPreviewProps) => {
+export const LayoutPreview = ({
+	accent,
+	endFrame,
+	fontFamily,
+	onSeekToStart,
+	startFrame,
+	segment,
+	theme,
+}: LayoutPreviewProps) => {
 	const previewSegment = useMemo(() => toPreviewSegment(segment, accent), [accent, segment]);
 	const durationInFrames = getSegmentDurationInFrames(previewSegment, FPS);
 	const frameToDisplay = Math.max(0, Math.min(durationInFrames - 24, Math.round(durationInFrames * 0.75)));
 	const template = useMemo<InfographicTemplate>(
 		() => ({
 			title: 'Layout preview',
+			fontFamily,
 			intro: false,
 			outro: false,
 			videoBased: false,
@@ -73,7 +84,7 @@ export const LayoutPreview = ({ accent, endFrame, onSeekToStart, startFrame, seg
 			theme,
 			segments: [previewSegment],
 		}),
-		[previewSegment, theme]
+		[fontFamily, previewSegment, theme]
 	);
 	const inputProps = useMemo<SegmentSceneProps>(
 		() => ({

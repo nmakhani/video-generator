@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { VIDEO_FONT_IDS } from '../brand';
 
 export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const slugSchema = z.string().regex(SLUG_PATTERN, 'Use lowercase letters, numbers, and single hyphens.');
@@ -62,6 +63,7 @@ const animatedSegmentSchema = z.object({
 
 export const templateSchema = z.object({
 	title: z.string().min(1),
+	fontFamily: z.enum(VIDEO_FONT_IDS).optional(),
 	caption: z.boolean().optional(),
 	hookText: z.string().optional(),
 	intro: z.boolean().optional(),

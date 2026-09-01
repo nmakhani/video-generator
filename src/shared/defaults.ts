@@ -1,8 +1,10 @@
 import { defaultTheme, type InfographicTemplate } from '../layoutCatalog';
+import { DEFAULT_VIDEO_FONT } from '../brand';
 import type { ProjectDocument } from './schemas';
 
 export const createDefaultTemplate = (): InfographicTemplate => ({
 	title: 'New project',
+	fontFamily: DEFAULT_VIDEO_FONT,
 	intro: true,
 	outro: true,
 	videoBased: false,

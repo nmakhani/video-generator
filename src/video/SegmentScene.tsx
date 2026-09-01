@@ -1,4 +1,5 @@
 import { AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
+import { DEFAULT_VIDEO_FONT, videoFontStyle } from '../brand';
 import { ANIMATION_SAFE_ZONE_BOTTOM_PX, defaultTheme } from '../layoutCatalog';
 import { SceneBackdrop } from './scene/SceneBackdrop';
 import { renderLayout } from './layouts/renderLayout';
@@ -27,6 +28,7 @@ export const SegmentScene = ({ durationInFrames, index, segment, template }: Seg
 	return (
 		<AbsoluteFill
 			style={{
+				...videoFontStyle(template.fontFamily ?? DEFAULT_VIDEO_FONT),
 				background: theme.background,
 				color: theme.text,
 				opacity: outro,
